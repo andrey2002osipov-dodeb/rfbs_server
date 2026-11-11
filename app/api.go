@@ -1,6 +1,6 @@
 package main
 
-// HTTP API для веб-интерфейса (только 127.0.0.1).
+// HTTP API для веб-интерфейса (127.0.0.1; в серверном режиме — по сети со входом, см. server.go).
 
 import (
 	"context"
@@ -31,12 +31,8 @@ func (s *Server) handle(mux *http.ServeMux, path string, fn apiFunc) {
 		w.Header().Set("Cache-Control", "no-store")
 		w.Header().Set("X-App", "ozon-rfbs")
 		// Защита от запросов с чужих сайтов (в том числе через подмену DNS): только своя страница.
-		if h := r.Host; !strings.HasPrefix(h, "127.0.0.1:") && !strings.HasPrefix(h, "localhost:") {
-			w.WriteHeader(403)
-			return
-		}
-		// Защита от запросов с чужих сайтов: принимаем только со своей страницы.
-		if o := r.Header.Get("Origin"); o != "" && !strings.HasPrefix(o, "http://127.0.0.1:") && !strings.HasPrefix(o, "http://localhost:") {
+		// Серверный режим: см. apiRequestAllowed в server.go.
+		if !apiRequestAllowed(r) {
 			w.WriteHeader(403)
 			return
 		}
@@ -147,6 +143,14 @@ func (s *Server) Routes(mux *http.ServeMux) {
 
 	s.handle(mux, "/api/state", func(r *http.Request, b map[string]any) (any, error) {
 		active, list := s.store.Snapshot()
+		// Серверная версия: у каждого браузера свой выбранный магазин (?id=...).
+		if want := r.URL.Query().Get("id"); want != "" {
+			for _, p := range list {
+				if p.ID == want {
+					active = want
+				}
+			}
+		}
 		var shops []map[string]any
 		var cur *profileOut
 		for _, p := range list {
@@ -155,7 +159,13 @@ func (s *Server) Routes(mux *http.ServeMux) {
 				cur = &profileOut{Profile: p, APIKeySet: p.APIKey != ""}
 			}
 		}
-		return map[string]any{"version": appVersion, "repo": repoURL, "data_dir": s.dir, "active": active, "shops": shops, "profile": cur}, nil
+		out := map[string]any{"version": appVersion, "repo": repoURL, "data_dir": s.dir, "active": active, "shops": shops, "profile": cur}
+		if srv != nil {
+			out["server"] = true
+			out["server_version"] = serverVersion
+			out["user"] = srv.sessionUser(r)
+		}
+		return out, nil
 	})
 
 	s.handle(mux, "/api/profile/save", func(r *http.Request, b map[string]any) (any, error) {
@@ -602,11 +612,17 @@ func (s *Server) Routes(mux *http.ServeMux) {
 	})
 
 	s.handle(mux, "/api/open-dir", func(r *http.Request, b map[string]any) (any, error) {
+		if srv != nil {
+			return nil, fmt.Errorf("на сервере папка данных: %s", s.dir)
+		}
 		openFolder(s.dir)
 		return map[string]any{"ok": true}, nil
 	})
 
 	s.handle(mux, "/api/quit", func(r *http.Request, b map[string]any) (any, error) {
+		if srv != nil {
+			return nil, fmt.Errorf("на сервере программа работает постоянно — закрывать её не нужно")
+		}
 		go func() {
 			time.Sleep(300 * time.Millisecond)
 			s.mgr.StopAll()

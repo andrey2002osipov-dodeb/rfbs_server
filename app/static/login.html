@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Вход · Ozon rFBS</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#f4f6fa">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ozon rFBS">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="mobile.css">
+</head>
+<body class="login-page">
+<main class="login-wrap">
+  <form class="card login-card" id="f" autocomplete="on">
+    <div class="brand"><img src="icon.svg" alt="" class="logo"><div><b>Ozon rFBS</b><span>остатки и статусы заказов</span></div></div>
+    <label class="fld">Логин<input id="u" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required></label>
+    <label class="fld">Пароль<input id="p" name="password" type="password" autocomplete="current-password" required></label>
+    <button class="btn primary lg" type="submit" id="go">Войти</button>
+    <div id="err" class="login-err hidden"></div>
+  </form>
+</main>
+<script>
+'use strict';
+const f = document.getElementById('f'), err = document.getElementById('err'), go = document.getElementById('go');
+document.getElementById('u').focus();
+f.onsubmit = async e => {
+  e.preventDefault();
+  go.disabled = true; err.classList.add('hidden');
+  try {
+    const r = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user: f.u.value.trim(), password: f.p.value }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || ('Ошибка ' + r.status));
+    location.replace('/');
+  } catch (ex) {
+    err.textContent = ex.message === 'Failed to fetch' ? 'Нет связи с сервером. Проверьте, что Tailscale включён.' : ex.message;
+    err.classList.remove('hidden'); f.p.select();
+  } finally { go.disabled = false; }
+};
+</script>
+</body>
+</html>

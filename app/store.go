@@ -188,12 +188,16 @@ type Store struct {
 }
 
 func dataDir() string {
-	base, err := os.UserConfigDir()
-	if err != nil || base == "" {
-		exe, _ := os.Executable()
-		base = filepath.Dir(exe)
+	// Серверная версия: папка данных задаётся явно (том Docker).
+	d := os.Getenv("OZON_RFBS_DATA")
+	if d == "" {
+		base, err := os.UserConfigDir()
+		if err != nil || base == "" {
+			exe, _ := os.Executable()
+			base = filepath.Dir(exe)
+		}
+		d = filepath.Join(base, "OzonRFBS")
 	}
-	d := filepath.Join(base, "OzonRFBS")
 	os.MkdirAll(filepath.Join(d, "logs"), 0o700)
 	os.MkdirAll(filepath.Join(d, "journal"), 0o700)
 	return d

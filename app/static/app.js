@@ -11,6 +11,7 @@ async function api(path, body) {
   const opt = body === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
   const r = await fetch(path, opt);
   const j = await r.json().catch(() => ({}));
+  if (r.status === 401 && j.login) { location.href = '/login'; throw new Error(j.error); } // серверная версия: сессия истекла
   if (!r.ok) throw new Error(j.error || ('Ошибка ' + r.status));
   return j;
 }
@@ -48,9 +49,16 @@ function rel(t) {
 }
 
 // ---------------- состояние ----------------
+// Выбранный магазин запоминается в этом браузере: на сервере у каждого пользователя и устройства он свой.
+const myShop = {
+  get() { try { return localStorage.getItem('rfbs.shop') || ''; } catch (e) { return ''; } },
+  set(id) { try { localStorage.setItem('rfbs.shop', id); } catch (e) { } },
+};
 async function loadState(full = true) {
-  const j = await api('/api/state');
+  const want = myShop.get();
+  const j = await api('/api/state' + (want ? '?id=' + encodeURIComponent(want) : ''));
   S = j;
+  myShop.set(j.active);
   const sel = $('#shopSel');
   sel.innerHTML = j.shops.map(s => `<option value="${s.id}">${esc(s.name)}${s.demo ? ' (демо)' : ''}${s.running ? ' ●' : ''}</option>`).join('');
   sel.value = j.active;
@@ -310,7 +318,7 @@ $$('.tabs button').forEach(b => b.onclick = () => {
   $$('.tab').forEach(t => t.classList.toggle('hidden', t.id !== 'tab-' + b.dataset.tab));
   if (b.dataset.tab === 'log') { renderLog(); const box = $('#logList'); box.scrollTop = box.scrollHeight; }
 });
-$('#shopSel').onchange = async e => { await api('/api/profile/select', { id: e.target.value }); run = null; queueEdit = null; tplEdit = {}; await loadState(); refreshRun(); refreshLog(); loadProducts(); };
+$('#shopSel').onchange = async e => { myShop.set(e.target.value); await api('/api/profile/select', { id: e.target.value }); run = null; queueEdit = null; tplEdit = {}; await loadState(); refreshRun(); refreshLog(); loadProducts(); };
 $('#quitBtn').onclick = async () => {
   const anyRun = S.shops.some(s => s.running);
   if (!(await confirmBox(`<h3>Закрыть программу?</h3>${anyRun ? '<p>Автоматизация будет приостановлена до следующего запуска программы. Пока программа закрыта, статусы заказов не меняются.</p>' : ''}`, 'Закрыть'))) return;
@@ -389,11 +397,11 @@ $('#pSave').onclick = async () => {
     $('#pMsg').textContent = 'Сохранено'; setTimeout(() => $('#pMsg').textContent = '', 2500); await loadState();
   } catch (e) { toast(e.message, true); }
 };
-$('#shopNew').onclick = async () => { await api('/api/profile/new', { demo: false }); await loadState(); $$('.tabs button')[2].click(); toast('Создан новый магазин — заполните ключи'); };
-$('#shopDemo').onclick = async () => { await api('/api/profile/new', { demo: true }); await loadState(); refreshRun(); };
+$('#shopNew').onclick = async () => { const n = await api('/api/profile/new', { demo: false }); myShop.set(n.id); await loadState(); $$('.tabs button')[2].click(); toast('Создан новый магазин — заполните ключи'); };
+$('#shopDemo').onclick = async () => { const n = await api('/api/profile/new', { demo: true }); myShop.set(n.id); await loadState(); refreshRun(); };
 $('#sShops').onclick = async e => {
   const sel = e.target.dataset.sel, del = e.target.dataset.del;
-  if (sel) { await api('/api/profile/select', { id: sel }); await loadState(); refreshRun(); refreshLog(); loadProducts(); }
+  if (sel) { myShop.set(sel); await api('/api/profile/select', { id: sel }); await loadState(); refreshRun(); refreshLog(); loadProducts(); }
   if (del) {
     const s = S.shops.find(x => x.id === del);
     if (!(await confirmBox(`<h3>Удалить магазин «${esc(s.name)}»?</h3><p>Ключи и настройки этого магазина будут удалены с компьютера.</p>`, 'Удалить'))) return;
@@ -405,7 +413,7 @@ $('#updCheck').onclick = async () => {
   try {
     const j = await api('/api/update');
     box.innerHTML = j.newer
-      ? `<div class="ok">Доступна версия <b>${esc(j.latest)}</b> (у вас ${esc(j.current)}). ${j.download ? `<a href="${esc(j.download)}">Скачать ${esc(j.download.split('/').pop())}</a> · ` : ''}<a href="${esc(j.url)}" target="_blank" rel="noopener">что нового</a><br><span class="small">Закройте программу (⏻), удалите старый .exe и запустите новый. Настройки сохранятся.</span></div>`
+      ? `<div class="ok">Доступна версия <b>${esc(j.latest)}</b> (у вас ${esc(j.current)}). ${j.download && !S.server ? `<a href="${esc(j.download)}">Скачать ${esc(j.download.split('/').pop())}</a> · ` : ''}<a href="${esc(j.url)}" target="_blank" rel="noopener">что нового</a><br><span class="small">${S.server ? 'Это версия программы автора. Обновление сервера: дождитесь новой сборки rfbs_server и в OpenMediaVault нажмите Pull и Up у контейнера. Настройки сохранятся.' : 'Закройте программу (⏻), удалите старый .exe и запустите новый. Настройки сохранятся.'}</span></div>`
       : `<div>У вас последняя версия (${esc(j.current)}).</div>`;
   } catch (e) { box.innerHTML = `<div class="err">${esc(e.message)}</div>`; }
 };

@@ -1,0 +1,28 @@
+# Ozon rFBS — серверная версия.
+# OpenMediaVault: Службы → Compose → Файлы → «+ Создать», вставить этот текст,
+# заменить пароль ниже, сохранить и нажать «Up». Подробно: docs/OMV.md
+
+services:
+  rfbs:
+    image: ghcr.io/andrey2002osipov-dodeb/rfbs_server:latest
+    container_name: rfbs
+    restart: unless-stopped
+    ports:
+      - "8766:8766"
+    environment:
+      TZ: Europe/Moscow
+      # Первый пользователь. Используется только при самом первом запуске, когда пользователей ещё нет.
+      # Потом пароль меняется в программе: Настройки → Пользователи. Отсюда его можно стереть.
+      OZON_RFBS_ADMIN_USER: admin
+      OZON_RFBS_ADMIN_PASSWORD: "ЗАМЕНИТЕ-на-свой-пароль"
+      # От какого пользователя работает программа (100 = группа users в OMV)
+      PUID: "1000"
+      PGID: "100"
+    volumes:
+      # Магазины, ключи, партии, журналы. Не удаляйте эту папку при обновлении.
+      - ./data:/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

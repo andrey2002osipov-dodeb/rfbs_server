@@ -39,7 +39,15 @@
 
 **Через Tailscale, по HTTPS (рекомендуется):** адрес вида `https://kucha.<ваша-сеть>.ts.net`. На телефоне программа ставится как приложение, вход защищён шифрованием.
 
-1. Если Tailscale на сервере ещё нет (команда `tailscale` не найдена), установите его по SSH и войдите по ссылке, которую выведет `tailscale up`:
+1. Если Tailscale работает в Docker-контейнере (`docker ps` показывает контейнер `tailscale`), все команды `tailscale …` ниже выполняйте как `docker exec tailscale tailscale …`. Публикация программы в этом случае:
+
+   ```bash
+   docker exec tailscale tailscale serve --bg http://$(hostname -I | awk '{print $1}'):8766
+   ```
+
+   Чтобы вход в Tailscale не слетал при перезапуске, у контейнера должна быть подключена папка для `TS_STATE_DIR` (например `/var/lib/tailscale`).
+
+   Если Tailscale на сервере нет совсем (ни команды `tailscale`, ни контейнера), установите его по SSH и войдите по ссылке, которую выведет `tailscale up`:
 
    ```bash
    curl -fsSL https://tailscale.com/install.sh | sh

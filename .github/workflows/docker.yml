@@ -72,11 +72,11 @@ jobs:
 
       - name: Проверка образа
         run: |
-          docker run -d --name t -p 8766:8766 -e OZON_RFBS_ADMIN_USER=admin -e OZON_RFBS_ADMIN_PASSWORD=checkpass1 "${IMAGE}:sha-${GITHUB_SHA::7}"
+          docker run -d --name rfbs-check -p 8766:8766 -e OZON_RFBS_ADMIN_USER=admin -e OZON_RFBS_ADMIN_PASSWORD=checkpass1 "${IMAGE}:sha-${GITHUB_SHA::7}"
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8766/api/ping && break; sleep 1; done
           code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8766/api/state)
           test "$code" = 401 || { echo "без входа ожидался 401, получено $code"; exit 1; }
           curl -fsS -c c.txt -H 'Content-Type: application/json' -d '{"user":"admin","password":"checkpass1"}' http://127.0.0.1:8766/api/login
           curl -fsS -b c.txt http://127.0.0.1:8766/api/state | grep -q '"server":true'
-          docker exec t sh -c 'ls -ln /data && test -f /data/users.json'
-          docker logs t
+          docker exec rfbs-check sh -c 'ls -ln /data && test -f /data/users.json'
+          docker logs rfbs-check

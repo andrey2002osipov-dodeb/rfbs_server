@@ -39,14 +39,25 @@
 
 **Через Tailscale, по HTTPS (рекомендуется):** адрес вида `https://kucha.<ваша-сеть>.ts.net`. На телефоне программа ставится как приложение, вход защищён шифрованием.
 
-1. В [панели Tailscale](https://login.tailscale.com/admin/dns) включите **MagicDNS** и **HTTPS Certificates**.
-2. На сервере по SSH выполните:
+1. Если Tailscale на сервере ещё нет (команда `tailscale` не найдена), установите его по SSH и войдите по ссылке, которую выведет `tailscale up`:
+
+   ```bash
+   curl -fsSL https://tailscale.com/install.sh | sh
+   ```
+
+   ```bash
+   tailscale up
+   ```
+
+   В [панели Tailscale](https://login.tailscale.com/admin/machines) у сервера: ⋯ → **Disable key expiry**. Иначе примерно через полгода сервер выпадет из сети Tailscale и потребует входа заново.
+2. В [панели Tailscale](https://login.tailscale.com/admin/dns) включите **MagicDNS** и **HTTPS Certificates**.
+3. На сервере по SSH выполните:
 
    ```bash
    sudo tailscale serve --bg 8766
    ```
 
-3. Команда выведет адрес `https://….ts.net`. Его и откройте.
+4. Команда выведет адрес `https://….ts.net`. Его и откройте.
 
 Отключить HTTPS-адрес:
 

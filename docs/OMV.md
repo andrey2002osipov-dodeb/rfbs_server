@@ -106,6 +106,7 @@ sudo tailscale serve --https=443 off
 
 | Что видно | Что сделать |
 |---|---|
+| Контейнер в статусе `Restarting` | `docker logs rfbs --tail 30`. «пароль: не короче 8 символов» — удлините пароль в compose-файле и нажмите Up. |
 | Контейнер сразу останавливается | Compose → Контейнеры → `rfbs` → Логи. Если там «нет ни одного пользователя», значит не задан пароль в compose-файле. |
 | Pull: `denied` или `unauthorized` | На GitHub: Packages → `rfbs_server` → Package settings → Change visibility → **Public**. |
 | Не открывается с телефона | Включён ли Tailscale на телефоне? Открывается ли адрес на компьютере в домашней сети? |

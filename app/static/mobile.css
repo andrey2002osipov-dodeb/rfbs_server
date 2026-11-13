@@ -56,20 +56,32 @@
   .wh { max-width: none; }
   .msgs { font-size: 13.5px; }
 
-  /* партии: панель очередей */
-  .tplbar { gap: 8px; }
-  .tplbar .tplsel { min-width: 0; max-width: none; width: 100%; }
-  .tplbar > .btn { flex: 1; }
-  .tplbar > .grow { display: none; }
-  #queueReset { flex-basis: 100%; }
+  /* очередь: Начать / Пауза / Закончить */
+  .qbar { padding: 12px; gap: 10px; }
+  .qbar .row { gap: 8px; }
+  #qIdle .tplsel { flex-basis: 100%; width: 100%; max-width: none; }
+  #qIdle .btn.lg, #qRun .btn.lg { flex: 1; min-height: 50px; font-size: 16px; }
+  #qRun .qstate { flex-basis: 100%; margin: 0; }
+  .runinfo:empty { display: none; }
+  #tab-orders .card > .row.wrap { gap: 8px; }
+  #tab-orders .card > .row.wrap > .grow { display: none; }
+  #tab-orders .card > .row.wrap > .btn, #tplRunBox, #tplRunBox .btn { flex: 1 1 calc(50% - 8px); }
+  #batchSave { flex-basis: 100% !important; min-height: 48px; }
+  #batchDirty { flex-basis: 100%; text-align: center; }
 
-  /* автоматизация */
-  .auto { flex-direction: column; align-items: stretch; gap: 12px; }
-  .seg.big { display: grid; grid-template-columns: 1fr 1fr; }
-  .seg.big span { text-align: center; padding: 10px 6px; font-size: 14px; }
-  #runBtn { width: 100%; justify-content: center; padding: 14px; font-size: 16px; }
+  /* тестовый режим и демо-заказы */
+  .banner .row .btn { flex: 1 1 100%; }
   #demoBtns { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; width: 100%; }
   #demoBtns.hidden { display: none; }
+  #demoBtns .muted { flex-basis: 100%; }
+  #demoBtns .btn { flex: 1 1 calc(50% - 6px); }
+
+  /* настройки */
+  .form2 { grid-template-columns: 1fr; }
+  .form2 .self-end { margin-top: -4px; }
+  .switch { align-items: flex-start; font-size: 14.5px; line-height: 1.35; padding: 6px 0; }
+  .switch input { flex: none; width: 20px; height: 20px; min-height: 0; margin-top: 1px; }
+  .modal-btns .btn { min-height: 48px; }
 
   /* ---------- таблицы → карточки ---------- */
   .scroll, .tablebox { overflow: visible; max-height: none; border: 0; border-radius: 0; }

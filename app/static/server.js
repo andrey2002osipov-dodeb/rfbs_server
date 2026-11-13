@@ -21,6 +21,32 @@
     if (el) watch(el.tagName === 'TABLE' ? el.parentElement : el);
   });
 
+  // ---------- целевые заказы на телефоне: свёрнутые карточки со стрелкой ----------
+  // Свёрнуто: номер, партия, создан, статус Ozon и «что дальше». Стрелка раскрывает окно доставки и все шаги.
+  // Таблица перерисовывается каждые 3 секунды — раскрытые заказы запоминаются по номеру отправления.
+  const opened = new Set();
+  const ordersTable = $('#ordersTable');
+  if (ordersTable) {
+    const box = ordersTable.closest('.tablebox');
+    if (box) box.classList.add('ordbox');
+    const pn = tr => { const el = tr.querySelector('.pn'); return el && el.firstChild ? el.firstChild.textContent.trim() : ''; };
+    const decorate = () => $$('tbody tr', ordersTable).forEach(tr => {
+      const td = tr.firstElementChild;
+      if (!td || td.hasAttribute('colspan')) return;
+      if (!td.querySelector('.ord-tg')) td.insertAdjacentHTML('afterbegin', '<button type="button" class="ord-tg" aria-label="Подробнее"></button>');
+      tr.classList.toggle('open', opened.has(pn(tr)));
+    });
+    new MutationObserver(decorate).observe(ordersTable.tBodies[0], { childList: true });
+    decorate();
+    ordersTable.addEventListener('click', e => {
+      const tr = e.target.closest('tbody tr');
+      if (!tr || !e.target.closest('td:first-child')) return;
+      const k = pn(tr);
+      if (opened.has(k)) opened.delete(k); else opened.add(k);
+      tr.classList.toggle('open', opened.has(k));
+    });
+  }
+
   // ---------- PWA ----------
   if ('serviceWorker' in navigator && window.isSecureContext) {
     navigator.serviceWorker.register('sw.js').catch(() => { });

@@ -2,6 +2,7 @@
    Подключается после style.css программы автора и только дополняет его. */
 
 .tabs .ti { display: none; font-style: normal; }
+.ord-tg { display: none; }
 #logoutBtn svg { width: 18px; height: 18px; vertical-align: middle; }
 
 /* ---------- страница входа ---------- */
@@ -95,6 +96,21 @@
   table.grid td.r { text-align: right; }
   .grid tr.fin td { opacity: 1; }
   .grid tr.fin { opacity: .6; }
+
+  /* целевые заказы: своё окошко на 60% высоты экрана со своей прокруткой */
+  .tablebox.ordbox { max-height: 60vh; max-height: 60dvh; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+    background: var(--field); border-radius: 12px; padding: 8px 8px 0; }
+  .ordbox table.grid tr { margin-bottom: 8px; }
+  /* свёрнутый заказ: только шапка (номер, партия, создан, статус Ozon) и «Сейчас» */
+  #ordersTable tr:not(.open) td:not(:first-child):not(:last-child) { display: none; }
+  #ordersTable tr:not(.open) td:last-child { padding-top: 6px; }
+  #ordersTable tr:not(.open) td:last-child::before { display: none; }
+  #ordersTable td:first-child { position: relative; padding-right: 44px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .ord-tg { display: block; position: absolute; right: -6px; top: 0; width: 40px; height: 40px; min-height: 0; padding: 0; border: 0; border-radius: 10px; background: none; cursor: pointer; }
+  .ord-tg::after { content: ""; position: absolute; left: 50%; top: 45%; width: 9px; height: 9px; border: solid var(--muted); border-width: 0 2px 2px 0;
+    transform: translate(-50%, -50%) rotate(45deg); transition: transform .15s; }
+  #ordersTable tr.open .ord-tg::after { transform: translate(-50%, -20%) rotate(-135deg); }
+  .ord-tg:active { background: var(--accent-soft); }
 
   /* заказы: номер отправления — заголовок карточки */
   #ordersTable td:first-child, #skipTable td:first-child { display: block; text-align: left; border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-bottom: 4px; }
